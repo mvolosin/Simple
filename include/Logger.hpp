@@ -12,9 +12,9 @@
 #include <string>
 #include <thread>
 
-namespace Simple {
+enum class LogLevel { INFO, WARNING, ERROR, DEBUG, TRACE };
 
-    enum class LogLevel { INFO, WARNING, ERROR, DEBUG, TRACE };
+namespace Simple {
 
     class Logger {
     public:
@@ -113,13 +113,15 @@ namespace Simple {
         std::ostringstream os;
     };
 
+#ifdef INIT_SIMPLE_LOGGER
     Logger::Settings Logger::settings;
+#endif
 
 #define LOG(lvl)                                                                                                       \
-    if (lvl > Logger::level)                                                                                           \
+    if (lvl > Simple::Logger::settings.level)                                                                         \
         ;                                                                                                              \
     else                                                                                                               \
-        Logger().log(lvl)
+        Simple::Logger().log(lvl)
 }
 
 #endif
