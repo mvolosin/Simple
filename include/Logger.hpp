@@ -49,15 +49,15 @@ namespace Simple {
         {
             std::lock_guard<std::mutex> lock(settings.mtx);
 
-            // check if new file should be opened
-            checkTimePoint();
-
             // write log message to stdout or file
             os << '\n';
             if (!settings.file.is_open()) {
                 std::cout << os.str();
             }
             else {
+                // check if new file should be opened
+                checkTimePoint();
+
                 settings.file << os.str();
                 settings.file.flush();
             }
@@ -118,7 +118,7 @@ namespace Simple {
 #endif
 
 #define LOG(lvl)                                                                                                       \
-    if (lvl > Simple::Logger::settings.level)                                                                         \
+    if (lvl > Simple::Logger::settings.level)                                                                          \
         ;                                                                                                              \
     else                                                                                                               \
         Simple::Logger().log(lvl)
