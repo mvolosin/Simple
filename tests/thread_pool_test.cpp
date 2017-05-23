@@ -1,4 +1,5 @@
 #include "../include/ThreadPool.hpp"
+#define INIT_SIMPLE_LOGGER
 #include "../include/Logger.hpp"
 #include <iostream>
 #include <thread>
@@ -11,7 +12,7 @@ void task()
     for (; s < 100000; ++s){
         ;
     }
-    LOG(Simple::LogLevel::INFO) << "Result = " << s;
+    LOG(LogLevel::INFO) << "Result = " << s;
 };
 
 int main(int argc, char *argv[])

@@ -3,10 +3,10 @@
 
 #include <atomic>
 #include <condition_variable>
-#include <queue>
 #include <functional>
 #include <future>
 #include <mutex>
+#include <queue>
 #include <vector>
 
 namespace Simple {
@@ -33,14 +33,17 @@ namespace Simple {
 
         ~ThreadPool()
         {
-            shouldRun = false;
-            cv.notify_all();
-            for(auto& t : threads) {
+            {
+                Lock lock(mtx);
+                shouldRun = false;
+                cv.notify_all();
+            }
+            for (auto &t : threads) {
                 t.join();
             }
         }
 
-        std::future<R> addTask(std::function<R(Args...)>&& fun)
+        std::future<R> addTask(std::function<R(Args...)> &&fun)
         {
             Lock lock(mtx);
             Task task(fun);
@@ -51,7 +54,6 @@ namespace Simple {
         }
 
     private:
-
         void createThreads(size_t size)
         {
             for (size_t i = 0; i < size; ++i) {
@@ -63,23 +65,27 @@ namespace Simple {
         {
             Task task;
 
-            while (shouldRun) {
+            while (true) {
                 {
                     Lock lock(mtx);
+
+                    if (!shouldRun)
+                        break;
 
                     // if buffer is empty
                     if (buffer.empty()) {
                         cv.wait(lock);
-
-                        // if buffer is still empty (spurious wakeup or destructor called)
-                        if (buffer.empty())
-                            continue;
                     }
+
+                    // if buffer is still empty (spurious wakeup or destructor called)
+                    if (buffer.empty())
+                        continue;
 
                     task = std::move(buffer.front());
                     buffer.pop();
                 }
 
+                // execute task
                 task();
             }
         }
