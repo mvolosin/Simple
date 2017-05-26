@@ -11,14 +11,11 @@
 
 namespace Simple {
 
-    template <class R>
-    class ThreadPool;
+    class ThreadPool {
+        using ThreadTask = std::function<void()>;
+        using TaskBuffer = std::queue<ThreadTask>;
 
-    template <class R, class... Args>
-    class ThreadPool<R(Args...)> {
-        using Task = std::packaged_task<R(Args...)>;
         using Lock = std::unique_lock<std::mutex>;
-        using TaskBuffer = std::queue<Task>;
 
     public:
         ThreadPool()
@@ -33,22 +30,22 @@ namespace Simple {
 
         ~ThreadPool()
         {
-            {
-                Lock lock(mtx);
-                shouldRun = false;
-                cv.notify_all();
-            }
+            shouldRun = false;
+            cv.notify_all();
             for (auto &t : threads) {
                 t.join();
             }
         }
 
-        std::future<R> addTask(std::function<R(Args...)> &&fun)
+        template <typename F, typename... Args>
+        auto addTask(F &&fun, Args &&... args)
         {
+            using ReturnType = typename std::result_of<F(Args...)>::type;
             Lock lock(mtx);
-            Task task(fun);
-            auto f = task.get_future();
-            buffer.push(std::move(task));
+            auto task = std::make_shared<std::packaged_task<ReturnType()>>(
+                std::bind(std::forward<F>(fun), std::forward<Args>(args)...));
+            std::future<ReturnType> f = task->get_future();
+            buffer.push([task]() { (*task)(); });
             cv.notify_all();
             return f;
         }
@@ -57,13 +54,13 @@ namespace Simple {
         void createThreads(size_t size)
         {
             for (size_t i = 0; i < size; ++i) {
-                threads.push_back(std::move(std::thread([this]() { run(); })));
+                threads.push_back(std::thread([this]() { run(); }));
             }
         }
 
         void run()
         {
-            Task task;
+            ThreadTask task;
 
             while (true) {
                 {
