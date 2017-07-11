@@ -84,10 +84,10 @@ namespace Simple {
             if (logToFile) {
                 if(openTimeIsDifferent())
                     openFile();
-                file << logLine;
+                file << logLine << std::endl;
             }
             else {
-                std::cerr << logLine;
+                std::cerr << logLine << std::endl;
             }
         }
 
@@ -187,7 +187,6 @@ namespace Simple {
 
         ~LogLine()
         {
-            os_ << std::endl;
             Simple::Logger::getInstance()->writeStream(os_.str());
         }
 
