@@ -10,89 +10,88 @@
 #include <vector>
 
 namespace Simple {
+class ThreadPool {
+    using ThreadTask = std::function<void()>;
+    using TaskBuffer = std::queue<ThreadTask>;
 
-    class ThreadPool {
-        using ThreadTask = std::function<void()>;
-        using TaskBuffer = std::queue<ThreadTask>;
+    using Lock = std::unique_lock<std::mutex>;
 
-        using Lock = std::unique_lock<std::mutex>;
+public:
+    ThreadPool()
+    {
+        createThreads(std::thread::hardware_concurrency());
+    }
 
-    public:
-        ThreadPool()
-        {
-            createThreads(4);
+    ThreadPool(size_t size)
+    {
+        createThreads(size);
+    }
+
+    ~ThreadPool()
+    {
+        shouldRun = false;
+        cv.notify_all();
+        for (auto& t : threads) {
+            t.join();
         }
+    }
 
-        ThreadPool(size_t size)
-        {
-            createThreads(size);
+    template <typename F, typename... Args>
+    auto addTask(F&& fun, Args&&... args)
+    {
+        using ReturnType = typename std::result_of<F(Args...)>::type;
+        Lock lock(mtx);
+        auto task = std::make_shared<std::packaged_task<ReturnType()>>(
+            std::bind(std::forward<F>(fun), std::forward<Args>(args)...));
+        std::future<ReturnType> f = task->get_future();
+        buffer.push([task]() { (*task)(); });
+        cv.notify_all();
+        return f;
+    }
+
+private:
+    void createThreads(size_t size)
+    {
+        for (size_t i = 0; i < size; ++i) {
+            threads.push_back(std::thread([this]() { run(); }));
         }
+    }
 
-        ~ThreadPool()
-        {
-            shouldRun = false;
-            cv.notify_all();
-            for (auto &t : threads) {
-                t.join();
-            }
-        }
+    void run()
+    {
+        ThreadTask task;
 
-        template <typename F, typename... Args>
-        auto addTask(F &&fun, Args &&... args)
-        {
-            using ReturnType = typename std::result_of<F(Args...)>::type;
-            Lock lock(mtx);
-            auto task = std::make_shared<std::packaged_task<ReturnType()>>(
-                std::bind(std::forward<F>(fun), std::forward<Args>(args)...));
-            std::future<ReturnType> f = task->get_future();
-            buffer.push([task]() { (*task)(); });
-            cv.notify_all();
-            return f;
-        }
+        while (true) {
+            {
+                Lock lock(mtx);
 
-    private:
-        void createThreads(size_t size)
-        {
-            for (size_t i = 0; i < size; ++i) {
-                threads.push_back(std::thread([this]() { run(); }));
-            }
-        }
+                if (!shouldRun)
+                    break;
 
-        void run()
-        {
-            ThreadTask task;
-
-            while (true) {
-                {
-                    Lock lock(mtx);
-
-                    if (!shouldRun)
-                        break;
-
-                    // if buffer is empty
-                    if (buffer.empty()) {
-                        cv.wait(lock);
-                    }
-
-                    // if buffer is still empty (spurious wakeup or destructor called)
-                    if (buffer.empty())
-                        continue;
-
-                    task = std::move(buffer.front());
-                    buffer.pop();
+                // if buffer is empty
+                if (buffer.empty()) {
+                    cv.wait(lock);
                 }
 
-                // execute task
-                task();
-            }
-        }
+                // if buffer is still empty (spurious wakeup or destructor called)
+                if (buffer.empty())
+                    continue;
 
-        std::atomic_bool shouldRun = true;
-        std::vector<std::thread> threads;
-        std::condition_variable cv;
-        std::mutex mtx;
-        TaskBuffer buffer;
-    };
+                task = std::move(buffer.front());
+                buffer.pop();
+            }
+
+            // execute task
+            task();
+        }
+    }
+
+    std::atomic_bool shouldRun = true;
+    std::vector<std::thread> threads;
+    std::condition_variable cv;
+    std::mutex mtx;
+    TaskBuffer buffer;
+};
 }
 
 #endif /* ifndef SIMPLE_THREADPOOL_HPP */
