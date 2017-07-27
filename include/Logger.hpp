@@ -205,7 +205,7 @@ namespace Simple {
     private:
         const std::string& levelToString(int level)
         {
-            static const std::array<std::string, 5> levels{ {"ERROR", "WARNING", "INFO", "DEBUG", "TRACE"} };
+            static const std::array<std::string, 5> levels = {"ERROR", "WARNING", "INFO", "DEBUG", "TRACE"};
             return levels[level];
         }
 
