@@ -2,6 +2,7 @@
 #define SIMPLE_LOGGER_HPP
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+// Windows
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
@@ -9,18 +10,6 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
-#else
-#include <sys/time.h>
-#endif
-
-#include <array>
-#include <sstream>
-#include <string>
-#include <iomanip>
-#include <iostream>
-#include <cstdio>
-#include <ctime>
-#include <fstream>
 
 #if _MSC_VER >= 1700
 #include <mutex>
@@ -34,9 +23,30 @@
 #include <boost/filesystem.hpp>
 #endif
 
+#else
+// Linux and friends
+#include <sys/time.h>
+#if __cplusplus > 201402L
+#include <mutex>
+#include <experimental/filesystem>
+#else
+#include <boost/thread.hpp>
+#include <boost/filesystem.hpp>
+#endif
+#endif
+
+#include <array>
+#include <sstream>
+#include <string>
+#include <iomanip>
+#include <iostream>
+#include <cstdio>
+#include <ctime>
+#include <fstream>
+
 namespace Simple {
 
-#if _MSC_VER >= 1700
+#if _MSC_VER >= 1700 || __cplusplus > 201402L
     using MutexType = std::mutex;
     using LockType = std::lock_guard<MutexType>;
 #else
@@ -44,7 +54,7 @@ namespace Simple {
     typedef boost::lock_guard<boost::mutex> LockType;
 #endif
 
-#if _MSC_VER >= 1900
+#if _MSC_VER >= 1900 || __cplusplus > 201402L
     namespace fs = std::experimental::filesystem;
 #else
     namespace fs = boost::filesystem;
@@ -78,7 +88,7 @@ namespace Simple {
             return LogLevel::Info;
         }
 
-        void writeStream(std::string& logLine)
+        void writeStream(std::string&& logLine)
         {
             LockType lock(mtx);
             if (logToFile) {
@@ -168,8 +178,8 @@ namespace Simple {
             file.open(ss.str(), std::ios::app);
         }
 
-        bool logToFile;
         int reportingLevel_;
+        bool logToFile;
         time_t lastOpenTime;
         MutexType mtx;
         std::string logsName;
@@ -195,7 +205,7 @@ namespace Simple {
     private:
         const std::string& levelToString(int level)
         {
-            static const std::array<std::string, 5> levels = { "ERROR", "WARNING", "INFO", "DEBUG", "TRACE" };
+            static const std::array<std::string, 5> levels{ {"ERROR", "WARNING", "INFO", "DEBUG", "TRACE"} };
             return levels[level];
         }
 
@@ -203,7 +213,7 @@ namespace Simple {
     };
 
     template <typename T>
-    LogLine& operator << (LogLine& ll, T && arg)
+    LogLine& operator << (LogLine&& ll, T && arg)
     {
         ll.stream() << std::forward<T>(arg);
         return ll;
