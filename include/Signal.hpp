@@ -25,10 +25,13 @@ public:
      *
      * @param s
      */
-    void connect(Slot s)
+    bool connect(Slot s)
     {
-        Lock l(mtx_);
+        if(s == nullptr)
+            return false;
+        Lock l{mtx_};
         slots_.push_back(s);
+        return true;
     }
 
     /**
@@ -38,18 +41,9 @@ public:
      */
     void emit(Args... args)
     {
-        Lock l(mtx_);
-        bool cleanAfter = false;
+        Lock l{mtx_};
         for (auto& s : slots_) {
-            if (s == nullptr) {
-                cleanAfter = true;
-                continue;
-            }
             s(args...);
-        }
-
-        if (cleanAfter) {
-            clean();
         }
     }
 
@@ -68,15 +62,8 @@ public:
      */
     void disconnectAll()
     {
-        Lock l(mtx_);
+        Lock l{mtx_};
         slots_.clear();
-    }
-
-private:
-    inline void clean()
-    {
-        auto newEnd = std::remove_if(slots_.begin(), slots_.end(), [](const auto& slot) { return slot == nullptr; });
-        slots_.erase(newEnd, slots_.end());
     }
 };
 } // namespace Simple
