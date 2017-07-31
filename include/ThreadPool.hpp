@@ -13,16 +13,17 @@ namespace Simple {
 class ThreadPool {
     using ThreadTask = std::function<void()>;
     using TaskBuffer = std::queue<ThreadTask>;
-
     using Lock = std::unique_lock<std::mutex>;
 
 public:
     ThreadPool()
+        : shouldRun{true}
     {
         createThreads(std::thread::hardware_concurrency());
     }
 
     ThreadPool(size_t size)
+        : shouldRun{true}
     {
         createThreads(size);
     }
@@ -40,7 +41,7 @@ public:
     auto addTask(F&& fun, Args&&... args)
     {
         using ReturnType = typename std::result_of<F(Args...)>::type;
-        Lock lock(mtx);
+        Lock lock{mtx};
         auto task = std::make_shared<std::packaged_task<ReturnType()>>(
             std::bind(std::forward<F>(fun), std::forward<Args>(args)...));
         std::future<ReturnType> f = task->get_future();
@@ -62,31 +63,30 @@ private:
         ThreadTask task;
 
         while (true) {
+            // wait for new task or end of waiting on condition variable
             {
-                Lock lock(mtx);
+                Lock lock{mtx};
+                cv.wait(lock, [&]() { return shouldRun == false || !buffer.empty(); });
 
-                if (!shouldRun)
-                    break;
-
-                // if buffer is empty
-                if (buffer.empty()) {
-                    cv.wait(lock);
+                if (!buffer.empty()) {
+                    task = std::move(buffer.front());
+                    buffer.pop();
                 }
-
-                // if buffer is still empty (spurious wakeup or destructor called)
-                if (buffer.empty())
-                    continue;
-
-                task = std::move(buffer.front());
-                buffer.pop();
             }
 
-            // execute task
-            task();
+            // if there was task in buffer execute it and continue to next task
+            if (task != nullptr) {
+                task();
+                task = nullptr;
+                continue;
+            }
+
+            // otherwise stop looping
+            return;
         }
     }
 
-    std::atomic_bool shouldRun = true;
+    std::atomic_bool shouldRun;
     std::vector<std::thread> threads;
     std::condition_variable cv;
     std::mutex mtx;
