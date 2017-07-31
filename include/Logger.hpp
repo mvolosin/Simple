@@ -11,13 +11,13 @@
 #endif
 #include <windows.h>
 
-#if _MSC_VER >= 1700
+#if (_MSC_VER >= 1700)
 #include <mutex>
 #else
 #include <boost/thread.hpp>
 #endif
 
-#if _MSC_VER >= 1900
+#if (_MSC_VER >= 1900)
 #include <filesystem>
 #else
 #include <boost/filesystem.hpp>
@@ -26,7 +26,7 @@
 #else
 // Linux and friends
 #include <sys/time.h>
-#if __cplusplus > 201402L
+#if (__cplusplus > 201402L)
 #include <mutex>
 #include <experimental/filesystem>
 #else
@@ -46,7 +46,7 @@
 
 namespace Simple {
 
-#if _MSC_VER >= 1700 || __cplusplus > 201402L
+#if (_MSC_VER >= 1700) || (__cplusplus > 201402L)
     using MutexType = std::mutex;
     using LockType = std::lock_guard<MutexType>;
 #else
@@ -54,7 +54,7 @@ namespace Simple {
     typedef boost::lock_guard<boost::mutex> LockType;
 #endif
 
-#if _MSC_VER >= 1900 || __cplusplus > 201402L
+#if (_MSC_VER >= 1900) || (__cplusplus > 201402L)
     namespace fs = std::experimental::filesystem;
 #else
     namespace fs = boost::filesystem;
@@ -127,15 +127,12 @@ namespace Simple {
         {
             const auto t = std::time(nullptr);
             tm now;
-#ifdef WIN32
-            localtime_s(&now, &t);
-#else
-            now = *std::localtime(&t);
-#endif
             tm last;
 #ifdef WIN32
+            localtime_s(&now, &t);
             localtime_s(&last, &lastOpenTime);
 #else
+            now = *std::localtime(&t);
             last = *std::localtime(&lastOpenTime);
 #endif
 
@@ -195,12 +192,17 @@ namespace Simple {
             os_ << " " << std::setw(9) << levelToString(level) + ": ";
         }
 
+        template <class T>
+        LogLine& operator<< (T && arg)
+        {
+            os_ << std::forward<T>(arg);
+            return *this;
+        }
+
         ~LogLine()
         {
             Simple::Logger::getInstance()->writeStream(os_.str());
         }
-
-        std::ostringstream& stream() { return os_; }
 
     private:
         const std::string& levelToString(int level)
@@ -212,12 +214,6 @@ namespace Simple {
         std::ostringstream os_;
     };
 
-    template <typename T>
-    LogLine& operator << (LogLine&& ll, T && arg)
-    {
-        ll.stream() << std::forward<T>(arg);
-        return ll;
-    }
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
     inline std::string NowTime()
@@ -241,15 +237,15 @@ namespace Simple {
 #else
     inline std::string NowTime()
     {
-        char buffer[11];
-        time_t t;
-        time(&t);
-        tm r = { 0 };
-        strftime(buffer, sizeof(buffer), "%X", localtime_r(&t, &r));
+        char buffer[50];
+        time_t t = time(nullptr);
+        tm r;
+        localtime_r(&t, &r);
+        strftime(buffer, sizeof(buffer), "%F %X", &r);
         struct timeval tv;
         gettimeofday(&tv, 0);
         char result[100] = { 0 };
-        std::sprintf(result, "%s.%03ld", buffer, (long)tv.tv_usec / 1000);
+        sprintf(result, "%s.%03ld", buffer, (long)tv.tv_usec / 1000);
         return result;
     }
 #endif //WIN32

@@ -1,6 +1,6 @@
-#include "../include/ThreadPool.hpp"
-#define INIT_SIMPLE_LOGGER
 #include "../include/Logger.hpp"
+#include "../include/ThreadPool.hpp"
+
 #include <iostream>
 #include <thread>
 
@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
                 for (; s < 100000; ++s) {
                     ;
                 }
-                LOG(LogLevel::INFO) << "Task ID " << id << " result = " << s;
+                LOG_INFO << "Task ID " << id << " result = " << s;
 
             },
             i));
@@ -39,7 +39,7 @@ int main(int argc, char *argv[])
                 for (; s < 100000; ++s) {
                     ;
                 }
-                LOG(LogLevel::INFO) << "Task ID " << id << " result = " << s;
+                LOG_INFO << "Task ID " << id << " result = " << s;
                 return s;
             },
             i));
