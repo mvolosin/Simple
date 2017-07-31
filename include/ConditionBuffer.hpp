@@ -12,12 +12,11 @@ class ConditionBuffer {
     using MutexType = std::mutex;
     using LockType = std::unique_lock<MutexType>;
 
+    size_t maxBufferSize;
     std::atomic_bool enabled;
-
     MutexType mutex;
     std::condition_variable cv;
     std::queue<T> queue;
-    size_t maxBufferSize;
 
 public:
     ConditionBuffer(void)
