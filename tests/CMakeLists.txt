@@ -15,5 +15,5 @@ ENDIF()
 
 add_executable(condition_buffer_test "condition_buffer_test.cpp")
 IF( NOT WIN32 )
-target_link_libraries(condition_buffer_test Threads::Threads)
+target_link_libraries(condition_buffer_test Threads::Threads "-lstdc++fs")
 ENDIF()

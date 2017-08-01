@@ -1,6 +1,7 @@
-#include <thread>
 #include <iostream>
+#include <thread>
 
+#include "Logger.hpp"
 #include "ConditionBuffer.hpp"
 
 struct MyObject {
@@ -8,33 +9,38 @@ struct MyObject {
     int y;
 };
 
-std::ostream& operator<<(std::ostream& os, const MyObject& obj) {
+std::ostream& operator<<(std::ostream& os, const MyObject& obj)
+{
     os << "X: " << obj.x << " Y: " << obj.y;
     return os;
 }
 
 std::mutex mtx;
-void log(MyObject& obj) {
+void log(MyObject& obj)
+{
     std::lock_guard<std::mutex> lock(mtx);
-    std::cout << "TID: " << std::this_thread::get_id() << " " << obj << std::endl;
+    LOG_INFO << "TID: " << std::this_thread::get_id() << " " << obj;
 }
 
-void logEnd() {
+void logEnd()
+{
     std::lock_guard<std::mutex> lock(mtx);
-    std::cout << "TID: " << std::this_thread::get_id() << " ended" << std::endl;
+    LOG_INFO << "TID: " << std::this_thread::get_id() << " ended";
 }
 
-void logFullBuffer() {
+void logFullBuffer()
+{
     std::lock_guard<std::mutex> lock(mtx);
-    std::cout << "Buffer is full" << std::endl;
+    LOG_INFO << "Buffer is full";
 }
 
-int main() {
+int main()
+{
     Simple::ConditionBuffer<MyObject, 1000> buffer;
-    
-    std::thread producer( [&]() {
+
+    std::thread producer([&]() {
         for (int i = 0; i < 1000; ++i) {
-            if (!buffer.put({ i, -i }))
+            if (!buffer.put({i, -i}))
                 logFullBuffer();
         }
     });
