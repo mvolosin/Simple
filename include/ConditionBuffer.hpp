@@ -19,13 +19,14 @@ class ConditionBuffer {
     std::queue<T> queue;
 
 public:
-    ConditionBuffer(void)
+    ConditionBuffer()
         : maxBufferSize{size}
         , enabled{true} {};
 
     void disable()
     {
         enabled = false;
+        cv.notify_all();
     }
 
     void enable()
