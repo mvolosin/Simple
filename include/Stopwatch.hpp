@@ -7,11 +7,11 @@
 
 namespace Simple {
 class Stopwatch {
-    using TimePointType = std::chrono::time_point<std::chrono::system_clock>;
     using ClockType = std::chrono::high_resolution_clock;
+    using TimePointType = ClockType::time_point;
 
-    TimePointType begin_;
     std::string name_;
+    TimePointType begin_;
     bool printed_;
 
 public:
