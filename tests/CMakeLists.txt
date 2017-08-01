@@ -4,7 +4,9 @@ add_executable(signal_test "signal_test.cpp")
 
 find_package(Threads REQUIRED)
 add_executable(thread_pool_test "thread_pool_test.cpp")
+IF( NOT WIN32 )
 target_link_libraries(thread_pool_test Threads::Threads "-lstdc++fs")
+ENDIF()
 
 add_executable(logger_test "logger_test.cpp")
 IF( NOT WIN32 )
