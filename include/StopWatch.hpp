@@ -6,7 +6,7 @@
 #include <string>
 
 namespace Simple {
-class Stopwatch {
+class StopWatch {
     using ClockType = std::chrono::high_resolution_clock;
     using TimePointType = ClockType::time_point;
 
@@ -15,14 +15,14 @@ class Stopwatch {
     bool printed_;
 
 public:
-    Stopwatch(std::string name)
+    StopWatch(std::string name)
         : name_(name)
         , begin_(ClockType::now())
         , printed_(false)
     {
     }
 
-    ~Stopwatch()
+    ~StopWatch()
     {
         if (!printed_) {
             print();
