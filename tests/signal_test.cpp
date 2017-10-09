@@ -7,10 +7,10 @@ using namespace std;
 class Object {
 public:
     int id = 0;
-    static int counter;
 
     Object(void)
     {
+        static int counter = 0;
         id = ++counter;
         std::cout << "Object " << id << " constructed." << std::endl;
     }
@@ -26,8 +26,6 @@ public:
         std::cout << "fun() member id = " << id << std::endl;
     }
 };
-
-int Object::counter = 0;
 
 int main(int argc, char *argv[])
 {
