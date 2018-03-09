@@ -37,11 +37,20 @@ public:
         }
     }
 
+    static ThreadPool& globalInstance()
+    {
+        static ThreadPool pool;
+        return pool;
+    }
+
     template <typename F, typename... Args>
     auto addTask(F&& fun, Args&&... args)
     {
         using ReturnType = typename std::result_of<F(Args...)>::type;
         Lock lock{mtx};
+        if (buffer.size() + 1 > threads.size()) {
+            threads.push_back(std::thread([this]() { run(); }));
+        }
         auto task = std::make_shared<std::packaged_task<ReturnType()>>(
             std::bind(std::forward<F>(fun), std::forward<Args>(args)...));
         std::future<ReturnType> f = task->get_future();
@@ -92,6 +101,6 @@ private:
     std::mutex mtx;
     TaskBuffer buffer;
 };
-}
+} // namespace Simple
 
 #endif /* ifndef SIMPLE_THREADPOOL_HPP */
