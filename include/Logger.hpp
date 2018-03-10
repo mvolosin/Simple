@@ -233,7 +233,7 @@ inline std::string NowTime()
     time_t t = time(nullptr);
     tm r;
     localtime_r(&t, &r);
-    strftime(buffer, sizeof(buffer), "%F %X", &r);
+    strftime(buffer, sizeof(buffer), "%F %H:%M:%S", &r);
     struct timeval tv;
     gettimeofday(&tv, 0);
     char result[100] = {0};
