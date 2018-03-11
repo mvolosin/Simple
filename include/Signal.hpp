@@ -27,11 +27,23 @@ public:
      */
     bool connect(Slot s)
     {
-        if(s == nullptr)
+        if (s == nullptr)
             return false;
         Lock l{mtx_};
         slots_.push_back(s);
         return true;
+    }
+
+    /**
+     * @brief Same as connect()
+     *
+     * @param s
+     *
+     * @return
+     */
+    bool operator+=(Slot s)
+    {
+        return connect(s);
     }
 
     /**
