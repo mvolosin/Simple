@@ -70,8 +70,8 @@ class Logger {
 public:
     static Logger* getInstance()
     {
-        static Logger* instance = new Logger();
-        return instance;
+        static Logger instance;
+        return &instance;
     };
 
     static int levelFromString(std::string level)
