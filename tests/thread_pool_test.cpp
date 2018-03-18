@@ -1,12 +1,12 @@
-#include "../include/Logger.hpp"
-#include "../include/ThreadPool.hpp"
-
 #include <iostream>
 #include <thread>
 
+#include "Simple/Logger.hpp"
+#include "Simple/ThreadPool.hpp"
+
 using namespace std;
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
     Simple::ThreadPool pool(10);
 
@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
             i));
     }
 
-    for (auto &f : futures) {
+    for (auto& f : futures) {
         f.get();
     }
 
@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
             i));
     }
 
-    for (auto &f : futures2) {
+    for (auto& f : futures2) {
         auto s = f.get();
     }
 

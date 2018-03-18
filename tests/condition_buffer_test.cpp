@@ -1,8 +1,8 @@
 #include <iostream>
 #include <thread>
 
-#include "Logger.hpp"
-#include "ConditionBuffer.hpp"
+#include "Simple/ConditionBuffer.hpp"
+#include "Simple/Logger.hpp"
 
 struct MyObject {
     int x;
