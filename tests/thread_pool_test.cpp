@@ -6,7 +6,7 @@
 
 using namespace std;
 
-int main(int argc, char* argv[])
+int main()
 {
     Simple::ThreadPool pool(10);
 
@@ -47,6 +47,7 @@ int main(int argc, char* argv[])
 
     for (auto& f : futures2) {
         auto s = f.get();
+        LOG_INFO << "REsult: " << s;
     }
 
     return 0;

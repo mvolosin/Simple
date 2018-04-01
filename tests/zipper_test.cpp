@@ -7,9 +7,9 @@
 
 using namespace std;
 
-int main(int argc, char *argv[])
+int main()
 {
-  
+
     std::vector<int> ints{ 10,20,30,40 };
     std::list<char> chars{ 'a', 'b', 'c', 'd' };
 
