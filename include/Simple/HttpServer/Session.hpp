@@ -80,9 +80,8 @@ class Session : public std::enable_shared_from_this<Session> {
             http::async_write(
                 self_.socket_, *sp,
                 boost::asio::bind_executor(self_.strand_,
-                                           std::bind(&Session::onWrite, self_.shared_from_this(),
-                                                     std::placeholders::_1, std::placeholders::_2,
-                                                     sp->need_eof())));
+                                           std::bind(&Session::onWrite, self_.shared_from_this(), std::placeholders::_1,
+                                                     std::placeholders::_2, sp->need_eof())));
         }
     };
 
@@ -116,9 +115,8 @@ private:
         // Read a request
         req_ = {};
         http::async_read(socket_, buffer_, req_,
-                         boost::asio::bind_executor(
-                             strand_, std::bind(&Session::onRead, shared_from_this(),
-                                                std::placeholders::_1, std::placeholders::_2)));
+                         boost::asio::bind_executor(strand_, std::bind(&Session::onRead, shared_from_this(),
+                                                                       std::placeholders::_1, std::placeholders::_2)));
     }
 
     void onRead(boost::system::error_code ec, std::size_t bytes_transferred)
@@ -167,20 +165,18 @@ private:
             return res;
         };
 
-        auto const string_response = [this](const std::string& text) {
+        auto const string_response = [this](const std::string& text, const std::string& content_type) {
             http::response<http::string_body> res{http::status::ok, req_.version()};
             res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-            res.set(http::field::content_type, "text/html");
+            res.set(http::field::content_type, content_type);
             res.keep_alive(req_.keep_alive());
             res.body() = text;
             res.prepare_payload();
             return res;
         };
 
-        auto const file_response = [this](boost::beast::string_view path,
-                                          http::file_body::value_type&& body) {
-            http::response<http::file_body> res{std::piecewise_construct,
-                                                std::make_tuple(std::move(body)),
+        auto const file_response = [this](boost::beast::string_view path, http::file_body::value_type&& body) {
+            http::response<http::file_body> res{std::piecewise_construct, std::make_tuple(std::move(body)),
                                                 std::make_tuple(http::status::ok, req_.version())};
             res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
             res.set(http::field::content_type, getMimeType(path));
@@ -190,8 +186,7 @@ private:
         };
 
         auto const server_error = [this](boost::beast::string_view what) {
-            http::response<http::string_body> res{http::status::internal_server_error,
-                                                  req_.version()};
+            http::response<http::string_body> res{http::status::internal_server_error, req_.version()};
             res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
             res.set(http::field::content_type, "text/html");
             res.keep_alive(req_.keep_alive());
@@ -218,7 +213,7 @@ private:
             lambda_(file_response(req_.target(), std::move(body)));
         }
         else {
-            lambda_(string_response(response.text));
+            lambda_(string_response(response.text, response.contentType));
         }
     }
 

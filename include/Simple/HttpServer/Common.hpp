@@ -19,7 +19,8 @@ struct Response {
     enum class Type { String, File };
     std::string text;
     std::string file;
-    Type type = Type::File;
+    std::string contentType{"text/html"};
+    Type type{Type::File};
 };
 
 using RequestCallback = std::function<Response(const StringRequest&)>;
