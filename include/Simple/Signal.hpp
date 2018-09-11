@@ -25,7 +25,7 @@ public:
      *
      * @param s
      */
-    bool connect(Slot s)
+    bool connect(Slot&& s)
     {
         if (s == nullptr)
             return false;
@@ -41,9 +41,9 @@ public:
      *
      * @return
      */
-    bool operator+=(Slot s)
+    bool operator+=(Slot&& s)
     {
-        return connect(s);
+        return connect(std::forward<Slot>(s));
     }
 
     /**
