@@ -11,9 +11,12 @@ namespace detail {
 template <class T, std::size_t Size>
 class storage {
     static const size_t TypeSize = sizeof(T);
+    static const size_t TypeAlign = alignof(T);
     static const size_t StorageSize = Size * TypeSize;
     static const size_t LastTypeBegin = StorageSize - TypeSize;
-    uint8_t storage_[StorageSize];
+
+    using StorageType = typename std::aligned_storage<TypeSize, TypeAlign>::type;
+    StorageType storage_[Size];
 
 public:
     void* data()
