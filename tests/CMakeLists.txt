@@ -24,5 +24,8 @@ IF( NOT WIN32 )
 target_link_libraries(condition_buffer_test Threads::Threads "-lstdc++fs")
 ENDIF()
 
-add_executable(zipper_test "zipper_test.cpp")
-target_include_directories(zipper_test PRIVATE ${SIMPLE_INCLUDE_DIR})
+#add_executable(zipper_test "zipper_test.cpp")
+#target_include_directories(zipper_test PRIVATE ${SIMPLE_INCLUDE_DIR})
+
+add_executable(static_map_test "static_map_test.cpp")
+target_link_libraries(static_map_test Simple)
